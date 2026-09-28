@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>First Aid Practice Cards</title>
+  <style>
+    :root { color-scheme: light; --ink:#17362f; --muted:#60766d; --line:#d7e7df; --green:#147d5b; --paper:#ffffff; --bg:#f3f8f4; --soft:#e9f4ed; --gold:#b16b22; }
+    * { box-sizing:border-box; }
+    html { font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:radial-gradient(circle at 20% 0%,#e1f2e9 0,transparent 31rem),var(--bg); }
+    button,select { font:inherit; }
+    button { cursor:pointer; }
+    .shell { max-width:1040px; margin:auto; padding:28px 22px 44px; }
+    header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:28px; }
+    .eyebrow { margin:0 0 6px; color:var(--green); text-transform:uppercase; letter-spacing:.13em; font-size:.75rem; font-weight:800; }
+    h1 { margin:0; font-size:clamp(1.75rem,4vw,2.65rem); line-height:1.12; letter-spacing:-.04em; }
+    .sub { margin:9px 0 0; color:var(--muted); line-height:1.45; }
+    .counter { flex:none; padding:10px 14px; border:1px solid var(--line); border-radius:999px; background:#fff; font-weight:700; font-variant-numeric:tabular-nums; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px; }
+    select,.toolbar button,.controls button { min-height:44px; padding:0 15px; border-radius:12px; border:1px solid var(--line); color:var(--ink); background:#fff; }
+    select { max-width:100%; min-width:210px; }
+    button:hover,select:hover { border-color:#91bea8; }
+    button:focus-visible,select:focus-visible { outline:3px solid #93dfb5; outline-offset:2px; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    .toolbar button[aria-pressed="true"] { background:var(--soft); border-color:#89b99b; }
+    .progress { height:8px; background:#deebe2; border-radius:999px; overflow:hidden; margin-bottom:18px; }
+    .progress>span { display:block; height:100%; width:0; background:var(--green); transition:width .2s; }
+    .card { display:flex; flex-direction:column; justify-content:space-between; min-height:390px; padding:clamp(24px,5vw,48px); border:1px solid var(--line); border-radius:26px; background:var(--paper); box-shadow:0 20px 60px rgba(20,65,43,.08); }
+    .card-top { display:flex; justify-content:space-between; gap:12px; align-items:center; color:var(--muted); font-size:.83rem; font-weight:700; letter-spacing:.03em; }
+    .tag { display:inline-block; padding:7px 11px; border-radius:999px; color:var(--green); background:var(--soft); }
+    .question { margin:28px 0 26px; max-width:780px; font-size:clamp(1.55rem,3.8vw,2.6rem); line-height:1.28; letter-spacing:-.035em; font-weight:750; }
+    .answer { padding:22px 24px; border-left:4px solid var(--green); border-radius:0 14px 14px 0; background:#f4faf6; }
+    .answer h2 { margin:0 0 8px; color:var(--green); font-size:.84rem; text-transform:uppercase; letter-spacing:.1em; }
+    .answer p { margin:0; max-width:760px; font-size:clamp(1rem,2.4vw,1.22rem); line-height:1.55; white-space:pre-line; }
+    .hint { color:var(--muted); font-size:.9rem; }
+    .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:18px; }
+    .controls .primary { color:#fff; background:var(--green); border-color:var(--green); font-weight:750; }
+    .controls .primary:hover { background:#0f684c; }
+    .controls .mastered { margin-left:auto; }
+    .controls .mastered[aria-pressed="true"] { color:var(--green); background:var(--soft); border-color:#89b99b; }
+    .notes { margin-top:25px; padding:16px 20px; color:var(--muted); border:1px solid var(--line); border-radius:14px; background:#ffffffa8; line-height:1.5; font-size:.9rem; }
+    .notes strong { color:var(--ink); }
+    .notes a { color:var(--green); }
+    @media(max-width:600px) { .shell { padding:20px 14px 35px; } header { flex-direction:column; } .card { min-height:430px; border-radius:20px; } .controls .mastered { margin-left:0; } .controls button { flex:1 1 auto; } }
+    @media print { body { background:#fff; } .toolbar,.controls,.notes,.progress { display:none; } .card { box-shadow:none; border:0; } .answer[hidden] { display:block; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div><p class="eyebrow">Study deck</p><h1>First Aid Practice Cards</h1><p class="sub">Think of your answer, then reveal it. One card is shown at a time.</p></div>
+      <div class="counter" id="counter" aria-live="polite"></div>
+    </header>
+    <div class="toolbar">
+      <label><span class="sr-only">Choose topic </span><select id="topic" aria-label="Choose topic"></select></label>
+      <button id="shuffle" type="button">Shuffle deck</button>
+      <button id="review" type="button" aria-pressed="false">Review unmastered</button>
+    </div>
+    <div class="progress" role="progressbar" aria-label="Position in deck" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progressFill"></span></div>
+    <article class="card" aria-live="polite">
+      <div><div class="card-top"><span class="tag" id="category"></span><span id="source"></span></div><div class="question" id="question"></div></div>
+      <div><div class="answer" id="answer" hidden><h2>Answer</h2><p id="answerText"></p></div><p class="hint" id="hint">Try answering before you reveal the card.</p></div>
+    </article>
+    <nav class="controls" aria-label="Flashcard controls">
+      <button id="previous" type="button">← Previous</button>
+      <button id="reveal" class="primary" type="button">Reveal answer</button>
+      <button id="next" type="button">Next →</button>
+      <button id="mastered" class="mastered" type="button" aria-pressed="false">Mark mastered</button>
+    </nav>
+    <aside class="notes"><strong>About this deck.</strong> These original practice questions summarize the locally supplied <em>St. John Ambulance First Aid Reference Guide, Fourth Edition (2019)</em>. The extracted source text is saved beside this page as <a href="first_aid_extracted.txt">first_aid_extracted.txt</a>. Guidance can change; use current training and emergency dispatcher instructions for real emergencies. <a href="https://sja.ca/en/resources/downloads-tools">St. John Ambulance resources</a> · <a href="https://www.heartandstroke.ca/how-you-can-help/learn-cpr">Current CPR resources</a>.</aside>
+  </main>
+  <script>
+    const cards = [
+      {t:"First aid basics",c:1,q:"What are the three priorities of first aid, in order?",a:"Preserve life, prevent the illness or injury from getting worse, and promote recovery."},
+      {t:"First aid basics",c:1,q:"What should a first aider do before touching a responsive person?",a:"Identify yourself, offer help, and ask for consent."},
+      {t:"First aid basics",c:1,q:"When may consent be implied?",a:"When a person cannot respond. For a young child, seek a parent or guardian's consent if available; if none is present, consent may be implied."},
+      {t:"First aid basics",c:1,q:"What is the difference between a sign and a symptom?",a:"A sign is something you can observe, such as bleeding. A symptom is something the person experiences and tells you, such as pain or nausea."},
+      {t:"First aid basics",c:1,q:"What does “mechanism of injury” mean?",a:"How an injury happened and the forces involved. It helps you suspect injuries that may not be obvious."},
+      {t:"First aid basics",c:1,q:"What should you do if a responsive person refuses first aid?",a:"Respect the refusal. You can still make the scene safer, call for medical help, and offer assistance without touching them."},
+      {t:"First aid basics",c:1,q:"Why should a first aider stay within their training?",a:"First aiders provide immediate help, not a medical diagnosis or procedures beyond their skills. Their actions should match their training and local rules."},
+      {t:"First aid basics",c:1,q:"Name two useful jobs you can assign to bystanders.",a:"Examples: call emergency services, bring an AED or first aid kit, control the crowd, take notes, or guide responders to the scene."},
+
+      {t:"Scene management",c:2,q:"What are the four stages of emergency scene management?",a:"Scene survey, primary survey, secondary survey, and ongoing casualty care."},
+      {t:"Scene management",c:2,q:"What is the first safety check at an emergency scene?",a:"Look for hazards to yourself, the person, and others. Enter only when it is safe and use trained responders for hazards requiring specialist skills."},
+      {t:"Scene management",c:2,q:"What do A, B, and C mean in the primary survey?",a:"Airway, Breathing, and Circulation. The primary survey seeks immediate threats to life."},
+      {t:"Scene management",c:2,q:"When should you call emergency services during the initial assessment?",a:"As soon as you identify a serious problem. If possible, use speakerphone so you can remain with the person and follow the dispatcher's directions."},
+      {t:"Scene management",c:2,q:"What information does a secondary survey gather?",a:"History, vital signs, a head-to-toe check, and information needed to care for other injuries or illnesses."},
+      {t:"Scene management",c:2,q:"What is ongoing casualty care?",a:"Continue to monitor breathing and condition, provide appropriate first aid, record changes, and hand over clear information when responders arrive."},
+      {t:"Scene management",c:2,q:"What is medical shock?",a:"A life-threatening failure of circulation in which body tissues do not receive enough oxygenated blood."},
+      {t:"Scene management",c:2,q:"What is triage in a multiple-person emergency?",a:"A rapid assessment used to prioritize people for first aid and transport according to urgency."},
+
+      {t:"Airway & breathing",c:3,q:"What is hypoxia?",a:"Too little oxygen reaching the blood and tissues. It can result from lack of oxygen, a blocked airway, or impaired heart or lung function."},
+      {t:"Airway & breathing",c:3,q:"Name three warning signs of ineffective breathing.",a:"Examples: struggling or gasping, unusually fast or slow breathing, noisy breathing, unequal chest movement, inability to speak normally, or changing skin colour."},
+      {t:"Airway & breathing",c:3,q:"How can you recognize a severe airway obstruction?",a:"The person cannot speak, cough effectively, or breathe, or makes a high-pitched sound while trying to breathe."},
+      {t:"Airway & breathing",c:3,q:"What should you do when a choking person can still cough forcefully?",a:"Encourage coughing and watch closely. Get help if the obstruction persists or breathing worsens."},
+      {t:"Airway & breathing",c:3,q:"What two techniques does the guide use for a responsive adult with severe choking?",a:"Alternate back blows and abdominal thrusts. Current first aid courses may also teach chest thrusts for particular situations; follow your current training."},
+      {t:"Airway & breathing",c:3,q:"How does care differ for a choking infant who cannot breathe or cough effectively?",a:"Use back blows and chest thrusts. Do not use abdominal thrusts on an infant."},
+      {t:"Airway & breathing",c:3,q:"What should you do if a choking person becomes unresponsive?",a:"Lower them safely, call emergency services, get an AED, and begin CPR starting with chest compressions. Remove an object from the mouth only if you can see it."},
+      {t:"Airway & breathing",c:3,q:"Why is swelling of the airway after a sting or food exposure urgent?",a:"It may be anaphylaxis, which can rapidly obstruct breathing. Call emergency services and help with an epinephrine auto-injector if available and within your training."},
+
+      {t:"Heart, stroke & CPR",c:4,q:"What symptoms can suggest a heart attack?",a:"Chest pressure, tightness or pain; discomfort in the arm, shoulder, jaw, back or upper abdomen; shortness of breath; nausea; or cold sweating. Symptoms can vary."},
+      {t:"Heart, stroke & CPR",c:4,q:"What is the first action when a heart attack is suspected?",a:"Call emergency services promptly. Keep the person at rest, monitor them, and follow dispatcher instructions."},
+      {t:"Heart, stroke & CPR",c:4,q:"What does FAST help you recognize?",a:"Stroke signs: Face drooping, Arm weakness, Speech difficulty, and Time to call emergency services."},
+      {t:"Heart, stroke & CPR",c:4,q:"How do you recognize possible cardiac arrest?",a:"The person is unresponsive and not breathing normally. Gasping is not normal breathing."},
+      {t:"Heart, stroke & CPR",c:4,q:"What is the purpose of chest compressions during CPR?",a:"To move blood to the brain and other vital organs until the heart restarts or professional help takes over."},
+      {t:"Heart, stroke & CPR",c:4,q:"What adult chest-compression rate does the guide give?",a:"100 to 120 compressions per minute, with full chest recoil and minimal interruptions."},
+      {t:"Heart, stroke & CPR",c:4,q:"What compression-to-breath ratio is used for standard one-rescuer CPR in the guide?",a:"30 compressions followed by 2 rescue breaths, when the rescuer is trained and willing to give breaths. Follow current training and dispatcher guidance."},
+      {t:"Heart, stroke & CPR",c:4,q:"What should you do when an AED arrives?",a:"Turn it on, attach the pads as shown, and follow its voice prompts. Make sure nobody is touching the person during analysis or a shock."},
+
+      {t:"Wounds & burns",c:5,q:"What is the difference between a dressing and a bandage?",a:"A dressing covers and protects the wound. A bandage holds a dressing in place or supports and immobilizes an injured part."},
+      {t:"Wounds & burns",c:5,q:"What is the main first-aid action for serious external bleeding?",a:"Apply firm direct pressure over the wound with a clean dressing or cloth, and call emergency services for severe bleeding."},
+      {t:"Wounds & burns",c:5,q:"Why check circulation below an injury before and after bandaging?",a:"The injury, swelling, or a tight bandage may reduce blood flow. Compare colour, warmth, and sensation with the other limb."},
+      {t:"Wounds & burns",c:5,q:"What clues may suggest internal bleeding?",a:"A serious injury mechanism, pain or swelling, bruising, and signs of shock can raise concern even when little blood is visible."},
+      {t:"Wounds & burns",c:5,q:"What should you do with an embedded object in a wound?",a:"Do not pull it out. Stabilize it, control bleeding around it, and obtain medical help."},
+      {t:"Wounds & burns",c:5,q:"What should you do first for a thermal burn?",a:"Stop the burning process and cool the burn with cool running water. Remove loose jewellery or clothing before swelling, but do not pull off material stuck to the burn."},
+      {t:"Wounds & burns",c:5,q:"Which burn features call for urgent medical assessment?",a:"Deep or extensive burns, burns involving the face, hands, feet, genitals or major joints, and any suspected airway or inhalation injury."},
+      {t:"Wounds & burns",c:5,q:"What symptoms after an insect sting may signal anaphylaxis?",a:"Generalized rash or swelling, especially around the airway, breathing difficulty, weakness, or rapid deterioration. Call emergency services."},
+
+      {t:"Bones & joints",c:6,q:"What is a fracture?",a:"A break or crack in a bone. It can be hard to distinguish from a sprain or dislocation without medical assessment."},
+      {t:"Bones & joints",c:6,q:"What is a sprain?",a:"An injury to a ligament, ranging from stretching to a complete tear."},
+      {t:"Bones & joints",c:6,q:"What is a dislocation?",a:"The bones at a joint are no longer in their normal contact or alignment."},
+      {t:"Bones & joints",c:6,q:"What is the main goal of first aid for bone and joint injuries?",a:"Prevent further tissue damage and reduce pain by supporting the injured part and limiting movement."},
+      {t:"Bones & joints",c:6,q:"Should you push an exposed bone back into place?",a:"No. Protect the area, support the injury in the position found, control bleeding around it, and seek urgent medical help."},
+      {t:"Bones & joints",c:6,q:"What does RICE stand for in the guide?",a:"Rest, Immobilize, Cold, and Elevate. Use gentle, appropriate support while arranging medical assessment when needed."},
+      {t:"Bones & joints",c:6,q:"Why check circulation and sensation below a suspected fracture?",a:"Damage or swelling can impair blood flow or nerves. A cold, pale, numb, or weak limb needs urgent medical attention."},
+      {t:"Bones & joints",c:6,q:"What should you do when a head or spinal injury is suspected?",a:"Call emergency services, ask the person not to move, and support the head and neck as trained while monitoring airway and breathing."},
+
+      {t:"Other emergencies",c:7,q:"Why might a person with diabetes become suddenly confused or weak?",a:"Blood glucose may be too low or too high. A rapid onset may suggest low blood glucose, but assessment and appropriate help are important."},
+      {t:"Other emergencies",c:7,q:"What is the priority during a seizure?",a:"Protect the person from nearby hazards, cushion the head, note the duration, and monitor breathing after the seizure."},
+      {t:"Other emergencies",c:7,q:"What should you avoid doing during a seizure?",a:"Do not restrain the person or put anything in their mouth."},
+      {t:"Other emergencies",c:7,q:"Name three signs of a possible opioid overdose.",a:"Unresponsiveness or extreme drowsiness, slow or absent breathing, gurgling or snoring sounds, blue or pale skin, or pinpoint pupils."},
+      {t:"Other emergencies",c:7,q:"What is naloxone used for?",a:"It can temporarily reverse the effects of an opioid overdose. Call emergency services, give naloxone if available and according to your training, and support breathing."},
+      {t:"Other emergencies",c:7,q:"What is the main first-aid goal in hypothermia?",a:"Prevent further heat loss, move the person to shelter when safe, and obtain medical help. Handle the person gently."},
+      {t:"Other emergencies",c:7,q:"Why is heatstroke an emergency?",a:"It is a life-threatening rise in body temperature, often with altered mental status. Call emergency services and begin rapid cooling."},
+      {t:"Other emergencies",c:7,q:"What should you do when poisoning is suspected?",a:"Protect yourself, identify the substance if possible, call a poison centre for a responsive person, and call emergency services for severe symptoms or unresponsiveness. Do not induce vomiting unless instructed."},
+
+      {t:"Healthcare provider skills",c:8,q:"Why does the guide emphasize minimizing CPR pauses?",a:"Blood flow falls during interruptions. Resume compressions promptly after breaths or AED instructions."},
+      {t:"Healthcare provider skills",c:8,q:"What is a bag-valve mask used for?",a:"It is a ventilation device used by trained responders to deliver breaths through a face mask."},
+      {t:"Healthcare provider skills",c:8,q:"How much air should a trained responder give with a bag-valve mask?",a:"Only enough to make the chest visibly rise. Avoid excessive ventilation."},
+      {t:"Healthcare provider skills",c:8,q:"When might a trained provider use a jaw thrust to open the airway?",a:"When a spinal injury is suspected. Maintaining an open airway remains the priority if the jaw thrust does not work."}
+    ];
+    const $ = id => document.getElementById(id);
+    const topic = $('topic');
+    const topics = ['All topics', ...new Set(cards.map(card => card.t))];
+    for (const name of topics) { const option=document.createElement('option'); option.value=name; option.textContent=name; topic.append(option); }
+    let order=cards.map((_,i)=>i), position=0, revealed=false, review=false;
+    let mastered;
+    try { mastered=new Set(JSON.parse(localStorage.getItem('firstAidMastered')||'[]')); } catch { mastered=new Set(); }
+    function save() { try { localStorage.setItem('firstAidMastered',JSON.stringify([...mastered])); } catch {} }
+    function visibleOrder() { return order.filter(i => (topic.value==='All topics'||cards[i].t===topic.value) && (!review||!mastered.has(i))); }
+    function render() {
+      const deck=visibleOrder();
+      if (position>=deck.length) position=Math.max(0,deck.length-1);
+      const empty=deck.length===0;
+      const card=empty?null:cards[deck[position]];
+      $('counter').textContent=empty?'0 / 0':`${position+1} / ${deck.length}`;
+      $('category').textContent=empty?'Deck complete':card.t;
+      $('source').textContent=empty?'':`Chapter ${card.c}`;
+      $('question').textContent=empty?'You have mastered every card in this selection.':card.q;
+      $('answerText').textContent=empty?'':card.a;
+      $('answer').hidden=empty||!revealed;
+      $('hint').hidden=empty||revealed;
+      $('reveal').disabled=empty;
+      $('reveal').textContent=revealed?'Hide answer':'Reveal answer';
+      $('previous').disabled=empty||position===0;
+      $('next').disabled=empty||position===deck.length-1;
+      $('mastered').disabled=empty;
+      $('mastered').setAttribute('aria-pressed',String(!empty&&mastered.has(deck[position])));
+      $('mastered').textContent=!empty&&mastered.has(deck[position])?'✓ Mastered':'Mark mastered';
+      $('review').setAttribute('aria-pressed',String(review));
+      const pct=empty?100:100*(position+1)/deck.length;
+      $('progressFill').style.width=`${pct}%`;
+      document.querySelector('.progress').setAttribute('aria-valuenow',String(Math.round(pct)));
+      if (!empty) history.replaceState(null,'',`#card-${deck[position]+1}`);
+    }
+    $('reveal').addEventListener('click',()=>{revealed=!revealed;render();});
+    $('next').addEventListener('click',()=>{if(position<visibleOrder().length-1){position++;revealed=false;render();}});
+    $('previous').addEventListener('click',()=>{if(position>0){position--;revealed=false;render();}});
+    $('mastered').addEventListener('click',()=>{const i=visibleOrder()[position];if(i===undefined)return;if(mastered.has(i))mastered.delete(i);else mastered.add(i);save();if(review) position=Math.min(position,Math.max(0,visibleOrder().length-1));revealed=false;render();});
+    $('review').addEventListener('click',()=>{review=!review;position=0;revealed=false;render();});
+    $('shuffle').addEventListener('click',()=>{for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}position=0;revealed=false;render();});
+    topic.addEventListener('change',()=>{position=0;revealed=false;render();});
+    document.addEventListener('keydown',event=>{if(['SELECT','INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;if(event.key==='ArrowRight')$('next').click();if(event.key==='ArrowLeft')$('previous').click();if(event.key===' '){event.preventDefault();$('reveal').click();}});
+    const hash=location.hash.match(/^#card-(\d+)$/);if(hash){const i=Number(hash[1])-1;if(i>=0&&i<cards.length)position=i;}
+    render();
+  </script>
+</body>
+</html>
